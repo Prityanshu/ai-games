@@ -18,6 +18,7 @@ RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 GRAY = (200, 200, 200)
 LIGHT_BLUE = (173, 216, 230)
+YELLOW = (255, 255, 0)
 
 # Entities
 AGENT = "A"
@@ -236,10 +237,47 @@ def bfs_search(grid, start, goal):
 def move_agent(grid, path, screen):
     temp_grid = [row[:] for row in grid]  # Create a copy of the grid
     
-    for i, pos in enumerate(path):
+    # Initialize pause state
+    paused = False
+    current_step = 0
+    
+    while current_step < len(path):
+        # Process events to keep the window responsive
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+            
+            # Check for spacebar press to toggle pause
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    paused = not paused
+        
+        # Skip movement logic if paused
+        if paused:
+            # Draw current state
+            draw_grid(screen, temp_grid)
+            
+            # Draw pause indicator
+            pause_text = font.render("PAUSED - Press SPACE to continue", True, RED)
+            text_bg = pygame.Rect(WIDTH//2 - pause_text.get_width()//2 - 10, 
+                                HEIGHT//2 - pause_text.get_height()//2 - 10,
+                                pause_text.get_width() + 20, 
+                                pause_text.get_height() + 20)
+            pygame.draw.rect(screen, YELLOW, text_bg)
+            pygame.draw.rect(screen, BLACK, text_bg, 2)
+            screen.blit(pause_text, (WIDTH//2 - pause_text.get_width()//2, HEIGHT//2 - pause_text.get_height()//2))
+            
+            pygame.display.flip()
+            pygame.time.delay(50)  # Small delay to prevent CPU hogging
+            continue
+        
+        # Get current position
+        pos = path[current_step]
+        
         # Reset the previous position to EMPTY
-        if i > 0:
-            prev_pos = path[i-1]
+        if current_step > 0:
+            prev_pos = path[current_step-1]
             temp_grid[prev_pos[0]][prev_pos[1]] = EMPTY
         
         # Set current position to AGENT
@@ -247,14 +285,16 @@ def move_agent(grid, path, screen):
         
         # Draw and delay
         draw_grid(screen, temp_grid)
+        
+        # Display controls info
+        controls_text = small_font.render("Press SPACE to pause/resume", True, BLACK)
+        screen.blit(controls_text, (WIDTH//2 - controls_text.get_width()//2, HEIGHT - 30))
+        
         pygame.display.flip()
         pygame.time.delay(300)
         
-        # Process events to keep the window responsive
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                return
+        # Move to next step
+        current_step += 1
 
 def main():
     # Create a screen for the welcome screen
@@ -266,7 +306,7 @@ def main():
     agent_input = TextInput(WIDTH//2 - 150, HEIGHT + 30, 300, TEXT_INPUT_HEIGHT, 
                            "Agent Position (row,col):", "0,0")
     gold_input = TextInput(WIDTH//2 - 150, HEIGHT + 30 + TEXT_INPUT_HEIGHT + 20, 300, TEXT_INPUT_HEIGHT,
-                          "Gold Position (row,col):", "11,11")
+                          "Gold Position (row,col):", "9,9")  # Changed from 11,11 to 9,9 since GRID_SIZE is 10
     
     preview_button = Button(WIDTH//2 - 310, HEIGHT + 30 + 2*TEXT_INPUT_HEIGHT + 40, 
                           200, BUTTON_HEIGHT, "Preview", GRAY)
@@ -334,7 +374,7 @@ def main():
             
             # Draw instructions
             instructions = small_font.render(
-                "Set the starting positions for the agent and gold. Format: row,col (0-11)", 
+                "Set the starting positions for the agent and gold. Format: row,col (0-9)", 
                 True, BLACK
             )
             welcome_screen.blit(instructions, (WIDTH//2 - instructions.get_width()//2, 50))
@@ -378,6 +418,12 @@ def main():
                 # Display message about the path
                 message = font.render(f"Path length: {len(path)} steps", True, BLACK)
                 game_screen.blit(message, (WIDTH//2 - message.get_width()//2, 10))
+                
+                # Display controls message
+                controls = small_font.render("Press SPACE to pause/resume the animation", True, BLACK)
+                game_screen.blit(controls, (WIDTH//2 - controls.get_width()//2, 40))
+                
+                pygame.display.flip()
                 
                 # Move agent along the path
                 move_agent(grid, path, game_screen)
