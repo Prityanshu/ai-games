@@ -178,7 +178,9 @@ def generate_random_grid():
     return grid, agent_pos, gold_pos, wumpus_pos
 
 def draw_grid(surface, grid):
+
     surface.fill(WHITE)
+
     for row in range(GRID_SIZE):
         for col in range(GRID_SIZE):
             x, y = col * TILE_SIZE, row * TILE_SIZE
@@ -453,4 +455,5 @@ def main():
     pygame.quit()
 
 if __name__ == "__main__":
+    print("The app has started.")
     main()

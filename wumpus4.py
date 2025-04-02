@@ -62,6 +62,9 @@ DIFFICULTY_SETTINGS = {
 }
 
 # Initialize Pygame
+
+# Pygame is the best.
+
 pygame.init()
 pygame.font.init()
 font = pygame.font.SysFont('Arial', 24)
